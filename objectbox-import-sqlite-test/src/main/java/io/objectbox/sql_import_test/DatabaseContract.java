@@ -9,7 +9,7 @@ public final class DatabaseContract {
 
     public static class SimpleEntity implements BaseColumns {
         // Looks like through Android API SQLite table and column names are case sensitive
-        public static final String TABLE_NAME = "SimpleEntity";
+        public static final String TABLE_NAME = "\"SimpleEntity\"";
         public static final String COLUMN_NAME_BOOLEAN = "simpleBoolean";
         public static final String COLUMN_NAME_BOOLEAN_NULL = "nullableBoolean";
         public static final String COLUMN_NAME_INTEGER = "simpleInteger";
@@ -30,12 +30,12 @@ public final class DatabaseContract {
     }
 
     public static class Customer implements BaseColumns {
-        public static final String TABLE_NAME = "Customer";
+        public static final String TABLE_NAME = "\"Customer\"";
         public static final String COLUMN_NAME_NAME = "name";
     }
 
     public static class Order implements BaseColumns {
-        public static final String TABLE_NAME = "Order";
+        public static final String TABLE_NAME = "\"Order\"";
         public static final String COLUMN_NAME_TEXT = "text";
         public static final String COLUMN_NAME_CUSTOMER = "customer";
     }
