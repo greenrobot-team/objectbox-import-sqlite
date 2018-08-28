@@ -1,0 +1,98 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:8865420952674219861",
+      "lastPropertyId": "18:5107187718687439051",
+      "name": "SimpleEntity",
+      "properties": [
+        {
+          "id": "1:1341570034887550943",
+          "name": "id"
+        },
+        {
+          "id": "2:7156394322736663789",
+          "name": "simpleBoolean"
+        },
+        {
+          "id": "3:4145373822348528696",
+          "name": "nullableBoolean"
+        },
+        {
+          "id": "4:4370842321265355596",
+          "name": "simpleInteger"
+        },
+        {
+          "id": "5:7001578292225304683",
+          "name": "nullableInteger"
+        },
+        {
+          "id": "6:4337255619366548763",
+          "name": "simpleShort"
+        },
+        {
+          "id": "7:2722360073252444746",
+          "name": "nullableShort"
+        },
+        {
+          "id": "8:7538462653150058361",
+          "name": "simpleLong"
+        },
+        {
+          "id": "9:6084025285378498475",
+          "name": "nullableLong"
+        },
+        {
+          "id": "10:1540282212289256658",
+          "name": "simpleFloat"
+        },
+        {
+          "id": "11:3320193632611198303",
+          "name": "nullableFloat"
+        },
+        {
+          "id": "12:3534358470717540327",
+          "name": "simpleDouble"
+        },
+        {
+          "id": "13:1239826309865950419",
+          "name": "nullableDouble"
+        },
+        {
+          "id": "14:2245214121899086971",
+          "name": "simpleByte"
+        },
+        {
+          "id": "15:8575531671914998489",
+          "name": "nullableByte"
+        },
+        {
+          "id": "16:2794921601538322080",
+          "name": "byteArray"
+        },
+        {
+          "id": "17:5146844714164374218",
+          "name": "text"
+        },
+        {
+          "id": "18:5107187718687439051",
+          "name": "date"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "1:8865420952674219861",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 4,
+  "modelVersionParserMinimum": 4,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

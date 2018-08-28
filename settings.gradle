@@ -1,0 +1,2 @@
+include ':objectbox-import-sqlite'
+include ':objectbox-import-sqlite-test'
