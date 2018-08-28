@@ -60,7 +60,7 @@ public class MigrationTest {
         assertEquals(SimpleEntity.class, tableMapping.getEntityClass());
 
         Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
-        assertEquals(17, columnMap.size());
+        assertEquals(18, columnMap.size());
 
         // migrate
         migration.migrate(null);
@@ -70,7 +70,7 @@ public class MigrationTest {
         assertEquals(1, simpleEntities.size());
         for (int i = 0; i < simpleEntities.size(); i++) {
             SimpleEntity e = simpleEntities.get(i);
-            assertEquals(ids[i], e.getId()); // TODO just equal due to order, not currently migrated
+            assertEquals(ids[i], e.getId());
 
             assertEquals(true, e.isSimpleBoolean());
             assertEquals(true, e.nullableBoolean);
