@@ -1,6 +1,5 @@
 package io.objectbox.sql_import_test;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
@@ -44,7 +43,18 @@ public class MigrationTest {
         // database setup
         DatabaseHelper.delete(appContext);
         SQLiteDatabase database = new DatabaseHelper(appContext).getWritableDatabase();
-        long[] ids = populateDatabase(database);
+        long[] simpleEntityIds = new long[]{
+                SqliteInsertHelper.insertSimpleEntity(database)
+        };
+        long[] customerIds = new long[] {
+                SqliteInsertHelper.insertCustomer(database, "Leia"),
+                SqliteInsertHelper.insertCustomer(database, "Luke")
+        };
+        long[] orderIds = new long[] {
+                SqliteInsertHelper.insertOrder(database, "Lightsaber", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Droid", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Speeder", customerIds[1]),
+        };
 
         BoxStore.deleteAllFiles(appContext, null);
         BoxStore boxStore = MyObjectBox.builder().androidContext(appContext).build();
@@ -70,7 +80,7 @@ public class MigrationTest {
         assertEquals(1, simpleEntities.size());
         for (int i = 0; i < simpleEntities.size(); i++) {
             SimpleEntity e = simpleEntities.get(i);
-            assertEquals(ids[i], e.getId());
+            assertEquals(simpleEntityIds[i], e.getId());
 
             assertTrue(e.isSimpleBoolean());
             assertEquals(true, e.nullableBoolean);
@@ -101,40 +111,5 @@ public class MigrationTest {
         }
     }
 
-    private long[] populateDatabase(SQLiteDatabase database) {
-        // TODO add null values
-        // TODO add multiple rows
-        ContentValues values = new ContentValues();
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN, true);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN_NULL, true);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER, 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER_NULL, 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT, (short) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT_NULL, (short) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG, 21L);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG_NULL, 21L);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT, 21.0f);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT_NULL, 21.0f);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE, 21.0);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE_NULL, 21.0);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE, (byte) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_NULL, (byte) 21);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_ARRAY, new byte[]{1, 2, 3});
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_STRING, "Farah");
-
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.GERMANY);
-        calendar.set(2018, 1, 2, 21, 42, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DATE, calendar.getTimeInMillis());
-
-        long newRowId = database.insert(DatabaseContract.SimpleEntity.TABLE_NAME, null, values);
-        return new long[]{newRowId};
-    }
 
 }
