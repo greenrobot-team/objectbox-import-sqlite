@@ -29,4 +29,15 @@ public final class DatabaseContract {
         public static final String COLUMN_NAME_DATE = "date";
     }
 
+    public static class Customer implements BaseColumns {
+        public static final String TABLE_NAME = "Customer";
+        public static final String COLUMN_NAME_NAME = "name";
+    }
+
+    public static class Order implements BaseColumns {
+        public static final String TABLE_NAME = "Order";
+        public static final String COLUMN_NAME_TEXT = "text";
+        public static final String COLUMN_NAME_CUSTOMER = "customer";
+    }
+
 }
