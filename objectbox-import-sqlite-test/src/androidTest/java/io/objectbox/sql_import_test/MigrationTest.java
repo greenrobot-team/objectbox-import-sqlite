@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 public class MigrationTest {
 
     @Test
-    public void migrateWithAutoDetect() throws Exception {
+    public void migrateWithAutoDetect() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
         assertEquals("io.objectbox.sql_import_test", appContext.getPackageName());
@@ -72,7 +72,7 @@ public class MigrationTest {
             SimpleEntity e = simpleEntities.get(i);
             assertEquals(ids[i], e.getId());
 
-            assertEquals(true, e.isSimpleBoolean());
+            assertTrue(e.isSimpleBoolean());
             assertEquals(true, e.nullableBoolean);
 
             assertEquals(21, e.simpleInteger);
