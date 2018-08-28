@@ -1,0 +1,18 @@
+# IntelliJ Idea
+.idea/
+*.iml
+
+# Gradle
+.gradle
+/local.properties
+
+# macOS
+.DS_Store
+
+# Android
+build
+/captures
+.externalNativeBuild
+
+# ObjectBox
+default.json.bak
