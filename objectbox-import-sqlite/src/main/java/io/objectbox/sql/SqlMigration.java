@@ -99,6 +99,11 @@ public class SqlMigration {
                 for (Property property : properties) {
                     String columnName = property.name;
                     int indexOfColumn = indexOfColumnIn(columnName, tableName);
+                    if (indexOfColumn == -1 && property.isId) {
+                        // for @Id property try again with '_id'
+                        columnName = "_id";
+                        indexOfColumn = indexOfColumnIn(columnName, tableName);
+                    }
                     if (indexOfColumn != -1) {
                         Field field;
                         try {
