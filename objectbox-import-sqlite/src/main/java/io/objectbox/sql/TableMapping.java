@@ -52,7 +52,7 @@ public class TableMapping {
     }
 
     public Cursor query(SQLiteDatabase db) {
-        return db.query(tableName, null, null, null, null, null, null);
+        return db.query("\"" + tableName + "\"", null, null, null, null, null, null);
     }
 
     public Object newEntity() throws IllegalAccessException, InstantiationException {
