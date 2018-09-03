@@ -166,7 +166,7 @@ public class SqlMigration {
      * Returns -1 if the column does not exist.
      */
     private int indexOfColumnIn(String columnName, String tableName) {
-        Cursor cursor = database.query(tableName, null, null, null,
+        Cursor cursor = database.query("\"" + tableName + "\"", null, null, null,
                 null, null, null, "1");
         if (cursor == null) {
             return -1;
