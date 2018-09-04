@@ -24,8 +24,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.objectbox.Box;
 import io.objectbox.BoxStore;
@@ -75,7 +77,12 @@ public class SqlMigration {
     /**
      * Builds table to entity and column to property mapping. Matches class names with table names
      * and property names with column names. Note that on Android table and column names are case
-     * sensitive. Use {@link #setTableMap(HashMap)} instead to define a custom mapping.
+     * sensitive.
+     * <p/>
+     * A ToOne (like 'customer') can be mapped by defining the target ID property (like
+     * 'customerId'). It will map to a foreign key column named like the ToOne (like 'customer').
+     * <p/>
+     * Use {@link #setTableMap(HashMap)} instead to define a custom mapping.
      *
      * @param throwIfEntityUnmapped   Throws if an entity could not be
      *                                automatically mapped to a table. Set to false if you have
@@ -93,16 +100,28 @@ public class SqlMigration {
             if (tableExistsWithName(tableName)) {
                 TableMapping tableMapping = new TableMapping(tableName, entityClass);
 
+                Set<ForeignKey> foreignKeysOfTable = getForeignKeysOf(tableName);
+
                 // add mapping for each property that a column can be found for
                 EntityInfo entityInfo = boxStoreHelper.getEntityInfo(entityClass);
                 Property[] properties = entityInfo.getAllProperties();
                 for (Property property : properties) {
                     String columnName = property.name;
                     int indexOfColumn = indexOfColumnIn(columnName, tableName);
-                    if (indexOfColumn == -1 && property.isId) {
-                        // for @Id property try again with '_id'
-                        columnName = "_id";
-                        indexOfColumn = indexOfColumnIn(columnName, tableName);
+                    if (indexOfColumn == -1) {
+                        if (property.isId) {
+                            // for @Id property try again with '_id'
+                            columnName = "_id";
+                            indexOfColumn = indexOfColumnIn(columnName, tableName);
+                        } else if (property.name.endsWith("Id")) {
+                            // for potential to-one target ID property, try again without 'Id' suffix
+                            String columnFrom = property.name.substring(0, property.name.length() - 2);
+                            // ensure that column stores a foreign key
+                            if (isForeignKeyColumn(foreignKeysOfTable, columnFrom)) {
+                                columnName = columnFrom;
+                                indexOfColumn = indexOfColumnIn(columnName, tableName);
+                            }
+                        }
                     }
                     if (indexOfColumn != -1) {
                         Field field;
@@ -150,6 +169,15 @@ public class SqlMigration {
         }
     }
 
+    private boolean isForeignKeyColumn(Set<ForeignKey> foreignKeysOfTable, String columnFrom) {
+        for (ForeignKey foreignKey : foreignKeysOfTable) {
+            if (foreignKey.columnFrom.equals(columnFrom)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean tableExistsWithName(String tableName) {
         Cursor cursor = database.query("sqlite_master", new String[]{"name"},
                 "type='table' AND name=?", new String[]{tableName},
@@ -174,6 +202,47 @@ public class SqlMigration {
         int columnIndex = cursor.getColumnIndex(columnName);
         cursor.close();
         return columnIndex;
+    }
+
+    private Set<ForeignKey> getForeignKeysOf(String tableName) {
+        Set<ForeignKey> foreignKeys = new HashSet<>();
+
+        Cursor cursor = database.rawQuery("PRAGMA foreign_key_list(\"" + tableName + "\")", null);
+        try {
+            final int idColumnIndex = cursor.getColumnIndex("id");
+            final int seqColumnIndex = cursor.getColumnIndex("seq");
+            final int tableColumnIndex = cursor.getColumnIndex("table");
+            final int fromColumnIndex = cursor.getColumnIndex("from");
+            final int toColumnIndex = cursor.getColumnIndex("to");
+
+            // get IDs of multi-column foreign keys
+            Set<Integer> multiColumnForeignKeys = new HashSet<>();
+            final int count = cursor.getCount();
+            for (int position = 0; position < count; position++) {
+                cursor.moveToPosition(position);
+                final int seq = cursor.getInt(seqColumnIndex);
+                if (seq != 0) {
+                    multiColumnForeignKeys.add(cursor.getInt(idColumnIndex));
+                }
+            }
+
+            for (int position = 0; position < count; position++) {
+                cursor.moveToPosition(position);
+                final int id = cursor.getInt(idColumnIndex);
+                if (multiColumnForeignKeys.contains(id)) {
+                    continue; // skip, multi-column foreign keys are not supported
+                }
+                foreignKeys.add(new ForeignKey(
+                        cursor.getString(fromColumnIndex),
+                        cursor.getString(tableColumnIndex),
+                        cursor.getString(toColumnIndex)
+                ));
+            }
+        } finally {
+            cursor.close();
+        }
+
+        return foreignKeys;
     }
 
     /**

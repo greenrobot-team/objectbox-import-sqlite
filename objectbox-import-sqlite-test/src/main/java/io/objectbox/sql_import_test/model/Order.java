@@ -12,6 +12,7 @@ public class Order {
 
     public String text;
 
+    public long customerId; // TODO use ToOne.setTargetId() directly
     public ToOne<Customer> customer;
 
 }
