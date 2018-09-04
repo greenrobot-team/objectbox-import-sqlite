@@ -34,11 +34,13 @@ import io.objectbox.BoxStore;
 import io.objectbox.BoxStoreHelper;
 import io.objectbox.EntityInfo;
 import io.objectbox.Property;
+import io.objectbox.relation.ToOne;
 
 /**
  * Migrates data from a SQLite database to ObjectBox by mapping tables and columns to entities
  * and properties.
  */
+@SuppressWarnings("WeakerAccess")
 public class SqlMigration {
 
     private final SQLiteDatabase database;
@@ -79,8 +81,7 @@ public class SqlMigration {
      * and property names with column names. Note that on Android table and column names are case
      * sensitive.
      * <p/>
-     * A ToOne (like 'customer') can be mapped by defining the target ID property (like
-     * 'customerId'). It will map to a foreign key column named like the ToOne (like 'customer').
+     * A foreign key column is mapped to a ToOne, if one exists with the same name as the column.
      * <p/>
      * Use {@link #setTableMap(HashMap)} instead to define a custom mapping.
      *
@@ -106,8 +107,10 @@ public class SqlMigration {
                 EntityInfo entityInfo = boxStoreHelper.getEntityInfo(entityClass);
                 Property[] properties = entityInfo.getAllProperties();
                 for (Property property : properties) {
+                    // look for direct mapping of property name -> column name
                     String columnName = property.name;
                     int indexOfColumn = indexOfColumnIn(columnName, tableName);
+                    // fall back if no match found
                     if (indexOfColumn == -1) {
                         if (property.isId) {
                             // for @Id property try again with '_id'
@@ -120,6 +123,17 @@ public class SqlMigration {
                             if (isForeignKeyColumn(foreignKeysOfTable, columnFrom)) {
                                 columnName = columnFrom;
                                 indexOfColumn = indexOfColumnIn(columnName, tableName);
+                                // check if there actually is a ToOne
+                                try {
+                                    Field field = entityClass.getDeclaredField(columnFrom);
+                                    if (ToOne.class.isAssignableFrom(field.getType())) {
+                                        field.setAccessible(true);
+                                        tableMapping.putColumnMapping(new ForeignKeyMapping(
+                                                columnName, indexOfColumn, field));
+                                        continue;
+                                    }
+                                } catch (NoSuchFieldException ignored) {
+                                }
                             }
                         }
                     }
@@ -208,6 +222,7 @@ public class SqlMigration {
         Set<ForeignKey> foreignKeys = new HashSet<>();
 
         Cursor cursor = database.rawQuery("PRAGMA foreign_key_list(\"" + tableName + "\")", null);
+        //noinspection TryFinallyCanBeTryWithResources
         try {
             final int idColumnIndex = cursor.getColumnIndex("id");
             final int seqColumnIndex = cursor.getColumnIndex("seq");

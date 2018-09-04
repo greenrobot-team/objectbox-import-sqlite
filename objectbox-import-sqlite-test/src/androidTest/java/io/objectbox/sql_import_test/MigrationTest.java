@@ -171,7 +171,6 @@ public class MigrationTest {
         Order order = box.get(orderId);
         assertNotNull(order);
         assertEquals(text, order.text);
-        assertEquals(customerId, order.customerId);
         assertEquals(customerId, order.customer.getTargetId());
         assertNotNull(order.customer.getTarget());
     }
