@@ -22,6 +22,11 @@ import java.util.Date;
 
 import io.objectbox.Property;
 
+/**
+ * Maps a SQLite column to a property of an ObjectBox entity. The value of the column will be set as
+ * the value of the property.
+ */
+@SuppressWarnings("WeakerAccess")
 public class ColumnMapping {
 
     private final String columnName;
@@ -42,6 +47,10 @@ public class ColumnMapping {
 
     public int getColumnIndex() {
         return columnIndex;
+    }
+
+    public Field getField() {
+        return field;
     }
 
     /**

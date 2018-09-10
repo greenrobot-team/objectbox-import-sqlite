@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import io.objectbox.sql_import_test.DatabaseContract.Customer;
+import io.objectbox.sql_import_test.DatabaseContract.Order;
 import io.objectbox.sql_import_test.DatabaseContract.SimpleEntity;
 
 
@@ -20,7 +22,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    private static final String SQL_CREATE_ENTRIES =
+    private static final String SQL_CREATE_SIMPLE_ENTITY =
             "CREATE TABLE " + SimpleEntity.TABLE_NAME + " (" +
                     SimpleEntity._ID + " INTEGER PRIMARY KEY," +
                     SimpleEntity.COLUMN_NAME_BOOLEAN + " INTEGER," +
@@ -41,22 +43,43 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     SimpleEntity.COLUMN_NAME_STRING + " TEXT," +
                     SimpleEntity.COLUMN_NAME_DATE + " INTEGER)";
 
-    private static final String SQL_DELETE_ENTRIES =
-            "DROP TABLE IF EXISTS " + SimpleEntity.TABLE_NAME;
+    private static final String SQL_CREATE_CUSTOMER =
+            "CREATE TABLE " + Customer.TABLE_NAME + " (" +
+                    Customer._ID + " INTEGER PRIMARY KEY," +
+                    Customer.COLUMN_NAME_NAME + " TEXT)";
+
+    private static final String SQL_CREATE_ORDER =
+            "CREATE TABLE " + Order.TABLE_NAME + " (" +
+                    Order._ID + " INTEGER PRIMARY KEY," +
+                    Order.COLUMN_NAME_TEXT + " TEXT," +
+                    Order.COLUMN_NAME_CUSTOMER + " INTEGER,"
+                    + "FOREIGN KEY(" + Order.COLUMN_NAME_CUSTOMER + ") REFERENCES " + Customer.TABLE_NAME + "(_id))";
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(SQL_CREATE_ENTRIES);
+        db.execSQL(SQL_CREATE_SIMPLE_ENTITY);
+        db.execSQL(SQL_CREATE_CUSTOMER);
+        db.execSQL(SQL_CREATE_ORDER);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(SQL_DELETE_ENTRIES);
+        db.execSQL("DROP TABLE IF EXISTS " + SimpleEntity.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Customer.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + Order.TABLE_NAME);
         onCreate(db);
     }
 
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        if (!db.isReadOnly()) {
+            db.execSQL("PRAGMA foreign_keys = ON");
+        }
     }
 }

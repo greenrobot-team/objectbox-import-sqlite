@@ -1,6 +1,5 @@
 package io.objectbox.sql_import_test;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
@@ -21,10 +20,13 @@ import io.objectbox.BoxStore;
 import io.objectbox.sql.ColumnMapping;
 import io.objectbox.sql.SqlMigration;
 import io.objectbox.sql.TableMapping;
+import io.objectbox.sql_import_test.model.Customer;
 import io.objectbox.sql_import_test.model.MyObjectBox;
+import io.objectbox.sql_import_test.model.Order;
 import io.objectbox.sql_import_test.model.SimpleEntity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -44,7 +46,18 @@ public class MigrationTest {
         // database setup
         DatabaseHelper.delete(appContext);
         SQLiteDatabase database = new DatabaseHelper(appContext).getWritableDatabase();
-        long[] ids = populateDatabase(database);
+        long[] simpleEntityIds = new long[]{
+                SqliteInsertHelper.insertSimpleEntity(database)
+        };
+        long[] customerIds = new long[]{
+                SqliteInsertHelper.insertCustomer(database, "Leia"),
+                SqliteInsertHelper.insertCustomer(database, "Luke")
+        };
+        long[] orderIds = new long[]{
+                SqliteInsertHelper.insertOrder(database, "Lightsaber", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Droid", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Speeder", customerIds[1]),
+        };
 
         BoxStore.deleteAllFiles(appContext, null);
         BoxStore boxStore = MyObjectBox.builder().androidContext(appContext).build();
@@ -54,23 +67,54 @@ public class MigrationTest {
         migration.autoDetect();
 
         Map<String, TableMapping> map = migration.getTableMap();
-        assertEquals(1, map.size());
+        assertEquals(3, map.size());
+
+        assertSimpleEntityMapping(map);
+        assertCustomerMapping(map);
+        assertOrderMapping(map);
+
+        // migrate
+        migration.migrate(null);
+
+        assertSimpleEntityBox(boxStore, simpleEntityIds);
+        assertCustomerBox(boxStore, customerIds);
+        assertOrderBox(boxStore, orderIds, customerIds);
+    }
+
+    private void assertSimpleEntityMapping(Map<String, TableMapping> map) {
         TableMapping tableMapping = map.get("SimpleEntity");
         assertEquals("SimpleEntity", tableMapping.getTableName());
         assertEquals(SimpleEntity.class, tableMapping.getEntityClass());
 
         Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
         assertEquals(18, columnMap.size());
+    }
 
-        // migrate
-        migration.migrate(null);
+    private void assertCustomerMapping(Map<String, TableMapping> map) {
+        TableMapping tableMapping = map.get("Customer");
+        assertEquals("Customer", tableMapping.getTableName());
+        assertEquals(Customer.class, tableMapping.getEntityClass());
 
+        Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
+        assertEquals(2, columnMap.size());
+    }
+
+    private void assertOrderMapping(Map<String, TableMapping> map) {
+        TableMapping tableMapping = map.get("Order");
+        assertEquals("Order", tableMapping.getTableName());
+        assertEquals(Order.class, tableMapping.getEntityClass());
+
+        Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
+        assertEquals(3, columnMap.size());
+    }
+
+    private void assertSimpleEntityBox(BoxStore boxStore, long[] simpleEntityIds) {
         Box<SimpleEntity> box = boxStore.boxFor(SimpleEntity.class);
-        List<SimpleEntity> simpleEntities = box.query().build().find();
+        List<SimpleEntity> simpleEntities = box.getAll();
         assertEquals(1, simpleEntities.size());
         for (int i = 0; i < simpleEntities.size(); i++) {
             SimpleEntity e = simpleEntities.get(i);
-            assertEquals(ids[i], e.getId());
+            assertEquals(simpleEntityIds[i], e.getId());
 
             assertTrue(e.isSimpleBoolean());
             assertEquals(true, e.nullableBoolean);
@@ -101,40 +145,35 @@ public class MigrationTest {
         }
     }
 
-    private long[] populateDatabase(SQLiteDatabase database) {
-        // TODO add null values
-        // TODO add multiple rows
-        ContentValues values = new ContentValues();
+    private void assertCustomerBox(BoxStore boxStore, long[] customerIds) {
+        Box<Customer> box = boxStore.boxFor(Customer.class);
+        assertEquals(2, box.count());
 
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN, true);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN_NULL, true);
+        Customer leia = box.get(customerIds[0]);
+        assertNotNull(leia);
+        assertEquals("Leia", leia.name);
 
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER, 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER_NULL, 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT, (short) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT_NULL, (short) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG, 21L);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG_NULL, 21L);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT, 21.0f);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT_NULL, 21.0f);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE, 21.0);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE_NULL, 21.0);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE, (byte) 21);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_NULL, (byte) 21);
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_ARRAY, new byte[]{1, 2, 3});
-
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_STRING, "Farah");
-
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.GERMANY);
-        calendar.set(2018, 1, 2, 21, 42, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        values.put(DatabaseContract.SimpleEntity.COLUMN_NAME_DATE, calendar.getTimeInMillis());
-
-        long newRowId = database.insert(DatabaseContract.SimpleEntity.TABLE_NAME, null, values);
-        return new long[]{newRowId};
+        Customer luke = box.get(customerIds[1]);
+        assertNotNull(luke);
+        assertEquals("Luke", luke.name);
     }
+
+    private void assertOrderBox(BoxStore boxStore, long[] orderIds, long[] customerIds) {
+        Box<Order> box = boxStore.boxFor(Order.class);
+        assertEquals(3, box.count());
+
+        assertOrder(box, orderIds[0], "Lightsaber", customerIds[0]);
+        assertOrder(box,orderIds[1], "Droid", customerIds[0]);
+        assertOrder(box, orderIds[2],"Speeder", customerIds[1]);
+    }
+
+    private void assertOrder(Box<Order> box, long orderId, String text, long customerId) {
+        Order order = box.get(orderId);
+        assertNotNull(order);
+        assertEquals(text, order.text);
+        assertEquals(customerId, order.customer.getTargetId());
+        assertNotNull(order.customer.getTarget());
+    }
+
 
 }
