@@ -10,6 +10,7 @@ import java.util.TimeZone;
 import io.objectbox.sql_import_test.DatabaseContract.Customer;
 import io.objectbox.sql_import_test.DatabaseContract.Order;
 import io.objectbox.sql_import_test.DatabaseContract.SimpleEntity;
+import io.objectbox.sql_import_test.model.Mode;
 
 public class SqliteInsertHelper {
 
@@ -44,6 +45,8 @@ public class SqliteInsertHelper {
         calendar.set(2018, 1, 2, 21, 42, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         values.put(SimpleEntity.COLUMN_NAME_DATE, calendar.getTimeInMillis());
+
+        values.put(SimpleEntity.COLUMN_NAME_MODE, Mode.EXTRA.toId());
 
         return database.insertOrThrow(SimpleEntity.TABLE_NAME, null, values);
     }

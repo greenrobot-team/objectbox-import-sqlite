@@ -87,7 +87,7 @@ public class MigrationTest {
         assertEquals(SimpleEntity.class, tableMapping.getEntityClass());
 
         Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
-        assertEquals(18, columnMap.size());
+        assertEquals(19, columnMap.size());
     }
 
     private void assertCustomerMapping(Map<String, TableMapping> map) {

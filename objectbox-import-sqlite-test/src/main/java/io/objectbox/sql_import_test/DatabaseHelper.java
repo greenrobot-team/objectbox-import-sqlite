@@ -41,7 +41,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     SimpleEntity.COLUMN_NAME_BYTE_NULL + " BLOB," +
                     SimpleEntity.COLUMN_NAME_BYTE_ARRAY + " BLOB," +
                     SimpleEntity.COLUMN_NAME_STRING + " TEXT," +
-                    SimpleEntity.COLUMN_NAME_DATE + " INTEGER)";
+                    SimpleEntity.COLUMN_NAME_DATE + " INTEGER," +
+                    SimpleEntity.COLUMN_NAME_MODE + " INTEGER)";
 
     private static final String SQL_CREATE_CUSTOMER =
             "CREATE TABLE " + Customer.TABLE_NAME + " (" +
