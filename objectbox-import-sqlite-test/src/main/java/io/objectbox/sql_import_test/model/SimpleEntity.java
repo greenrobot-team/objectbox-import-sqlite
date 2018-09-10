@@ -45,7 +45,7 @@ public class SimpleEntity {
     private Date date;
 
     @Convert(converter = ModeConverter.class, dbType = Integer.class)
-    Mode mode;
+    public Mode mode;
 
     public SimpleEntity() {
     }
