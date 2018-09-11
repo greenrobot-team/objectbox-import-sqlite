@@ -1,4 +1,4 @@
-# Import a SQLite database to ObjectBox
+# Importing a SQLite database into ObjectBox
 
 This library can help importing data from a SQLite into an ObjectBox database.
 
