@@ -10,7 +10,6 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -30,7 +29,9 @@ import io.objectbox.sql_import_test.model.SimpleEntity;
 import io.objectbox.sql_import_test.model.SimpleEntity_;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -51,7 +52,8 @@ public class MigrationTest {
         DatabaseHelper.delete(appContext);
         SQLiteDatabase database = new DatabaseHelper(appContext).getWritableDatabase();
         long[] simpleEntityIds = new long[]{
-                SqliteInsertHelper.insertSimpleEntity(database)
+                SqliteInsertHelper.insertSimpleEntity(database),
+                SqliteInsertHelper.insertSimpleEntityAllNull(database)
         };
         long[] customerIds = new long[]{
                 SqliteInsertHelper.insertCustomer(database, "Leia"),
@@ -95,7 +97,8 @@ public class MigrationTest {
         DatabaseHelper.delete(appContext);
         SQLiteDatabase database = new DatabaseHelper(appContext).getWritableDatabase();
         long[] simpleEntityIds = new long[]{
-                SqliteInsertHelper.insertSimpleEntity(database)
+                SqliteInsertHelper.insertSimpleEntity(database),
+                SqliteInsertHelper.insertSimpleEntityAllNull(database)
         };
         long[] customerIds = new long[]{
                 SqliteInsertHelper.insertCustomer(database, "Leia"),
@@ -187,41 +190,75 @@ public class MigrationTest {
 
     private void assertSimpleEntityBox(BoxStore boxStore, long[] simpleEntityIds) {
         Box<SimpleEntity> box = boxStore.boxFor(SimpleEntity.class);
-        List<SimpleEntity> simpleEntities = box.getAll();
-        assertEquals(1, simpleEntities.size());
-        for (int i = 0; i < simpleEntities.size(); i++) {
-            SimpleEntity e = simpleEntities.get(i);
-            assertEquals(simpleEntityIds[i], e.getId());
+        assertEquals(2, box.count());
 
-            assertTrue(e.isSimpleBoolean());
-            assertEquals(true, e.nullableBoolean);
+        assertSimpleEntity(box, simpleEntityIds[0]);
+        assertSimpleEntityNullOrDefault(box, simpleEntityIds[1]);
+    }
 
-            assertEquals(21, e.simpleInteger);
-            assertEquals(21, e.getNullableInteger().intValue());
-            assertEquals((short) 21, e.getSimpleShort());
-            assertEquals((short) 21, e.nullableShort.shortValue());
-            assertEquals(21L, e.simpleLong);
-            assertEquals(21L, e.getNullableLong().longValue());
+    private void assertSimpleEntity(Box<SimpleEntity> box, long simpleEntityId) {
+        SimpleEntity notNullEntity = box.get(simpleEntityId);
+        assertEquals(simpleEntityId, notNullEntity.getId());
 
-            assertEquals(21.0f, e.getSimpleFloat(), 0);
-            assertEquals(21.0f, e.nullableFloat, 0);
-            assertEquals(21.0, e.simpleDouble, 0);
-            assertEquals(21.0, e.getNullableDouble(), 0);
+        assertTrue(notNullEntity.isSimpleBoolean());
+        assertEquals(true, notNullEntity.nullableBoolean);
 
-            assertEquals((byte) 21, e.getSimpleByte());
-            assertEquals((byte) 21, e.nullableByte.byteValue());
+        assertEquals(21, notNullEntity.simpleInteger);
+        assertEquals(21, notNullEntity.getNullableInteger().intValue());
+        assertEquals((short) 21, notNullEntity.getSimpleShort());
+        assertEquals((short) 21, notNullEntity.nullableShort.shortValue());
+        assertEquals(21L, notNullEntity.simpleLong);
+        assertEquals(21L, notNullEntity.getNullableLong().longValue());
 
-            assertTrue(Arrays.equals(new byte[]{1, 2, 3}, e.getByteArray()));
+        assertEquals(21.0f, notNullEntity.getSimpleFloat(), 0);
+        assertEquals(21.0f, notNullEntity.nullableFloat, 0);
+        assertEquals(21.0, notNullEntity.simpleDouble, 0);
+        assertEquals(21.0, notNullEntity.getNullableDouble(), 0);
 
-            assertEquals("Farah", e.text);
+        assertEquals((byte) 21, notNullEntity.getSimpleByte());
+        assertEquals((byte) 21, notNullEntity.nullableByte.byteValue());
 
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.GERMANY);
-            calendar.set(2018, 1, 2, 21, 42, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
-            assertEquals(calendar.getTimeInMillis(), e.getDate().getTime());
+        assertTrue(Arrays.equals(new byte[]{1, 2, 3}, notNullEntity.getByteArray()));
 
-            assertEquals(Mode.EXTRA, e.mode);
-        }
+        assertEquals("Farah", notNullEntity.text);
+
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.GERMANY);
+        calendar.set(2018, 1, 2, 21, 42, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        assertEquals(calendar.getTimeInMillis(), notNullEntity.getDate().getTime());
+
+        assertEquals(Mode.EXTRA, notNullEntity.mode);
+    }
+
+    private void assertSimpleEntityNullOrDefault(Box<SimpleEntity> box, long simpleEntityId) {
+        SimpleEntity nullEntity = box.get(simpleEntityId);
+        assertEquals(simpleEntityId, nullEntity.getId());
+
+        assertFalse(nullEntity.isSimpleBoolean());
+        assertNull(nullEntity.nullableBoolean);
+
+        assertEquals(0, nullEntity.simpleInteger);
+        assertNull(nullEntity.getNullableInteger());
+        assertEquals(0, nullEntity.getSimpleShort());
+        assertNull(nullEntity.nullableShort);
+        assertEquals(0, nullEntity.simpleLong);
+        assertNull(nullEntity.getNullableLong());
+
+        assertEquals(0, nullEntity.getSimpleFloat(), 0);
+        assertNull(nullEntity.nullableFloat);
+        assertEquals(0, nullEntity.simpleDouble, 0);
+        assertNull(nullEntity.getNullableDouble());
+
+        assertEquals((byte) 0, nullEntity.getSimpleByte());
+        assertNull(nullEntity.nullableByte);
+
+        assertNull(nullEntity.getByteArray());
+
+        assertNull(nullEntity.text);
+
+        assertNull(nullEntity.getDate());
+
+        assertEquals(Mode.NULL, nullEntity.mode);
     }
 
     private void assertCustomerBox(BoxStore boxStore, long[] customerIds) {

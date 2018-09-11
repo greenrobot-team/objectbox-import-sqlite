@@ -63,7 +63,9 @@ public class ColumnMapping {
         int columnIndex = getColumnIndex();
 
         Object value;
-        if (property.type == boolean.class || property.type == Boolean.class) {
+        if (!property.type.isPrimitive() && row.isNull(columnIndex)) {
+            value = null;
+        } else if (property.type == boolean.class || property.type == Boolean.class) {
             value = row.getInt(columnIndex) == 1;
         } else if (property.type == int.class || property.type == Integer.class) {
             value = row.getInt(columnIndex);

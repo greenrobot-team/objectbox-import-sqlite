@@ -15,8 +15,6 @@ import io.objectbox.sql_import_test.model.Mode;
 public class SqliteInsertHelper {
 
     public static long insertSimpleEntity(SQLiteDatabase database) {
-        // TODO add null values
-        // TODO add multiple rows with different values
         ContentValues values = new ContentValues();
 
         values.put(SimpleEntity.COLUMN_NAME_BOOLEAN, true);
@@ -47,6 +45,38 @@ public class SqliteInsertHelper {
         values.put(SimpleEntity.COLUMN_NAME_DATE, calendar.getTimeInMillis());
 
         values.put(SimpleEntity.COLUMN_NAME_MODE, Mode.EXTRA.toId());
+
+        return database.insertOrThrow("\"" + SimpleEntity.TABLE_NAME + "\"", null, values);
+    }
+
+    public static long insertSimpleEntityAllNull(SQLiteDatabase database) {
+        ContentValues values = new ContentValues();
+
+        values.putNull(SimpleEntity.COLUMN_NAME_BOOLEAN);
+        values.putNull(SimpleEntity.COLUMN_NAME_BOOLEAN_NULL);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_INTEGER);
+        values.putNull(SimpleEntity.COLUMN_NAME_INTEGER_NULL);
+        values.putNull(SimpleEntity.COLUMN_NAME_SHORT);
+        values.putNull(SimpleEntity.COLUMN_NAME_SHORT_NULL);
+        values.putNull(SimpleEntity.COLUMN_NAME_LONG);
+        values.putNull(SimpleEntity.COLUMN_NAME_LONG_NULL);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_FLOAT);
+        values.putNull(SimpleEntity.COLUMN_NAME_FLOAT_NULL);
+        values.putNull(SimpleEntity.COLUMN_NAME_DOUBLE);
+        values.putNull(SimpleEntity.COLUMN_NAME_DOUBLE_NULL);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_BYTE);
+        values.putNull(SimpleEntity.COLUMN_NAME_BYTE_NULL);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_BYTE_ARRAY);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_STRING);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_DATE);
+
+        values.putNull(SimpleEntity.COLUMN_NAME_MODE);
 
         return database.insertOrThrow("\"" + SimpleEntity.TABLE_NAME + "\"", null, values);
     }
