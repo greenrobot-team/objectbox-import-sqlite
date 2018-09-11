@@ -48,20 +48,20 @@ public class SqliteInsertHelper {
 
         values.put(SimpleEntity.COLUMN_NAME_MODE, Mode.EXTRA.toId());
 
-        return database.insertOrThrow(SimpleEntity.TABLE_NAME, null, values);
+        return database.insertOrThrow("\"" + SimpleEntity.TABLE_NAME + "\"", null, values);
     }
 
     public static long insertCustomer(SQLiteDatabase database, String name) {
         ContentValues values = new ContentValues();
         values.put(Customer.COLUMN_NAME_NAME, name);
-        return database.insertOrThrow(Customer.TABLE_NAME, null, values);
+        return database.insertOrThrow("\"" + Customer.TABLE_NAME + "\"", null, values);
     }
 
     public static long insertOrder(SQLiteDatabase database, String text, long customerId) {
         ContentValues values = new ContentValues();
         values.put(Order.COLUMN_NAME_TEXT, text);
         values.put(Order.COLUMN_NAME_CUSTOMER, customerId);
-        return database.insertOrThrow(Order.TABLE_NAME, null, values);
+        return database.insertOrThrow("\"" + Order.TABLE_NAME + "\"", null, values);
     }
 
 }
