@@ -47,7 +47,7 @@ column `customer INTEGER` is mapped to the `ToOne<Customer> customer` property.
 If table and column names do or can not match entity and property names, or you do not want to
 migrate all tables and/or columns, specify a manual mapping.
 
-Assuming the table schema is:
+For example, if the table schema is:
 ```
 CREATE TABLE orders (
     _id INTEGER PRIMARY KEY,
@@ -81,26 +81,28 @@ migration.migrate();
 
 ## Foreign keys
 When mapping foreign keys to to-one relationships the tool reads the foreign key column value as a
-long and then calls `setTargetId(foreignKey)` on the `ToOne` property.
+`long` and then calls `setTargetId(foreignKey)` on the `ToOne` property.
 
 Multi-part foreign keys are not supported.
 
+To-Many relationships are not supported.
+
 ## Post-migration
-The `migrate()` method can accept a `PostMigrationStep` which is run in the same transaction, after
-the migration code has finished. You can use this to tie up to-many relations or do any 
+The `migrate()` step can accept a `PostMigrationStep` which is run in the same transaction, just
+ after the migration code has finished. You can use this to tie up to-many relations or do any 
 post-processing on the just inserted data.
 
 ```java
 migration.migrate(new SqlMigration.PostMigrationStep() {
     @Override
     public void run(SQLiteDatabase database, BoxStore boxStore) {
-        // run in the same transaction as migration
+        // runs in the same transaction as migration
     }
 });
 ```
 
 ## Customization
-If the default implementation does not what you need it to do, `SqlMigration`, `TableMapping` and 
+If the default implementation does not do what you need it to, `SqlMigration`, `TableMapping` and 
 `ColumnMapping` can be subclassed.
 
 We also welcome change suggestions that might benefit others, feel free to create an issue!
