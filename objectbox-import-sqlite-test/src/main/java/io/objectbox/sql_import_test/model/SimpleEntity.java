@@ -2,8 +2,10 @@ package io.objectbox.sql_import_test.model;
 
 import java.util.Date;
 
+import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
+import io.objectbox.converter.PropertyConverter;
 
 @Entity
 public class SimpleEntity {
@@ -42,7 +44,8 @@ public class SimpleEntity {
 
     private Date date;
 
-    // TODO custom type
+    @Convert(converter = ModeConverter.class, dbType = Integer.class)
+    public Mode mode;
 
     public SimpleEntity() {
     }
@@ -125,5 +128,18 @@ public class SimpleEntity {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public static class ModeConverter implements PropertyConverter<Mode, Integer> {
+
+        @Override
+        public Mode convertToEntityProperty(Integer databaseValue) {
+            return Mode.fromId(databaseValue);
+        }
+
+        @Override
+        public Integer convertToDatabaseValue(Mode entityProperty) {
+            return entityProperty.toId();
+        }
     }
 }

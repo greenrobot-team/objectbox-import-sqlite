@@ -27,6 +27,7 @@ public final class DatabaseContract {
         public static final String COLUMN_NAME_BYTE_ARRAY = "byteArray";
         public static final String COLUMN_NAME_STRING = "text";
         public static final String COLUMN_NAME_DATE = "date";
+        public static final String COLUMN_NAME_MODE = "mode";
     }
 
     public static class Customer implements BaseColumns {

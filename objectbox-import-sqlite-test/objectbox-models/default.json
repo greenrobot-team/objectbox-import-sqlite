@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:8865420952674219861",
-      "lastPropertyId": "18:5107187718687439051",
+      "lastPropertyId": "19:3827635994212446316",
       "name": "SimpleEntity",
       "properties": [
         {
@@ -79,6 +79,10 @@
         {
           "id": "18:5107187718687439051",
           "name": "date"
+        },
+        {
+          "id": "19:3827635994212446316",
+          "name": "mode"
         }
       ],
       "relations": []

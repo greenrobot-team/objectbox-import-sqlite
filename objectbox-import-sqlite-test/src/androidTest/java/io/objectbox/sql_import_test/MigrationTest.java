@@ -21,6 +21,7 @@ import io.objectbox.sql.ColumnMapping;
 import io.objectbox.sql.SqlMigration;
 import io.objectbox.sql.TableMapping;
 import io.objectbox.sql_import_test.model.Customer;
+import io.objectbox.sql_import_test.model.Mode;
 import io.objectbox.sql_import_test.model.MyObjectBox;
 import io.objectbox.sql_import_test.model.Order;
 import io.objectbox.sql_import_test.model.SimpleEntity;
@@ -87,7 +88,7 @@ public class MigrationTest {
         assertEquals(SimpleEntity.class, tableMapping.getEntityClass());
 
         Map<String, ColumnMapping> columnMap = tableMapping.getColumnMap();
-        assertEquals(18, columnMap.size());
+        assertEquals(19, columnMap.size());
     }
 
     private void assertCustomerMapping(Map<String, TableMapping> map) {
@@ -142,6 +143,8 @@ public class MigrationTest {
             calendar.set(2018, 1, 2, 21, 42, 0);
             calendar.set(Calendar.MILLISECOND, 0);
             assertEquals(calendar.getTimeInMillis(), e.getDate().getTime());
+
+            assertEquals(Mode.EXTRA, e.mode);
         }
     }
 
