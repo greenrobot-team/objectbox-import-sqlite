@@ -23,7 +23,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private static final String SQL_CREATE_SIMPLE_ENTITY =
-            "CREATE TABLE " + SimpleEntity.TABLE_NAME + " (" +
+            "CREATE TABLE \"" + SimpleEntity.TABLE_NAME + "\" (" +
                     SimpleEntity._ID + " INTEGER PRIMARY KEY," +
                     SimpleEntity.COLUMN_NAME_BOOLEAN + " INTEGER," +
                     SimpleEntity.COLUMN_NAME_BOOLEAN_NULL + " INTEGER," +
@@ -45,12 +45,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     SimpleEntity.COLUMN_NAME_MODE + " INTEGER)";
 
     private static final String SQL_CREATE_CUSTOMER =
-            "CREATE TABLE " + Customer.TABLE_NAME + " (" +
+            "CREATE TABLE \"" + Customer.TABLE_NAME + "\" (" +
                     Customer._ID + " INTEGER PRIMARY KEY," +
                     Customer.COLUMN_NAME_NAME + " TEXT)";
 
     private static final String SQL_CREATE_ORDER =
-            "CREATE TABLE " + Order.TABLE_NAME + " (" +
+            "CREATE TABLE \"" + Order.TABLE_NAME + "\" (" +
                     Order._ID + " INTEGER PRIMARY KEY," +
                     Order.COLUMN_NAME_TEXT + " TEXT," +
                     Order.COLUMN_NAME_CUSTOMER + " INTEGER,"
@@ -65,9 +65,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + SimpleEntity.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + Customer.TABLE_NAME);
-        db.execSQL("DROP TABLE IF EXISTS " + Order.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS \"" + SimpleEntity.TABLE_NAME + "\"");
+        db.execSQL("DROP TABLE IF EXISTS \"" + Customer.TABLE_NAME + "\"");
+        db.execSQL("DROP TABLE IF EXISTS \"" + Order.TABLE_NAME + "\"");
         onCreate(db);
     }
 
