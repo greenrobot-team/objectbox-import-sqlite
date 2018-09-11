@@ -1,8 +1,9 @@
 package io.objectbox.sql_import_test.model;
 
 public enum Mode {
-    DEFAULT(0),
-    EXTRA(1);
+    NULL(0),
+    DEFAULT(1),
+    EXTRA(2);
 
     private final int id;
 
@@ -10,7 +11,10 @@ public enum Mode {
         this.id = id;
     }
 
-    public static Mode fromId(int id) {
+    public static Mode fromId(Integer id) {
+        if (id == null) {
+            return Mode.NULL;
+        }
         for (Mode mode : Mode.values()) {
             if (mode.id == id) {
                 return mode;

@@ -139,7 +139,11 @@ public class SimpleEntity {
 
         @Override
         public Integer convertToDatabaseValue(Mode entityProperty) {
-            return entityProperty.toId();
+            if (entityProperty == null) {
+                return Mode.NULL.toId();
+            } else {
+                return entityProperty.toId();
+            }
         }
     }
 }
