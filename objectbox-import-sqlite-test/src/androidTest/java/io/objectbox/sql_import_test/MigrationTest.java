@@ -21,10 +21,13 @@ import io.objectbox.sql.ColumnMapping;
 import io.objectbox.sql.SqlMigration;
 import io.objectbox.sql.TableMapping;
 import io.objectbox.sql_import_test.model.Customer;
+import io.objectbox.sql_import_test.model.Customer_;
 import io.objectbox.sql_import_test.model.Mode;
 import io.objectbox.sql_import_test.model.MyObjectBox;
 import io.objectbox.sql_import_test.model.Order;
+import io.objectbox.sql_import_test.model.Order_;
 import io.objectbox.sql_import_test.model.SimpleEntity;
+import io.objectbox.sql_import_test.model.SimpleEntity_;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -66,6 +69,79 @@ public class MigrationTest {
         // detect mapping
         SqlMigration migration = new SqlMigration(database, boxStore);
         migration.autoDetect();
+
+        Map<String, TableMapping> map = migration.getTableMap();
+        assertEquals(3, map.size());
+
+        assertSimpleEntityMapping(map);
+        assertCustomerMapping(map);
+        assertOrderMapping(map);
+
+        // migrate
+        migration.migrate(null);
+
+        assertSimpleEntityBox(boxStore, simpleEntityIds);
+        assertCustomerBox(boxStore, customerIds);
+        assertOrderBox(boxStore, orderIds, customerIds);
+    }
+
+    @Test
+    public void migrateWithCustomMapping() {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        assertEquals("io.objectbox.sql_import_test", appContext.getPackageName());
+
+        // database setup
+        DatabaseHelper.delete(appContext);
+        SQLiteDatabase database = new DatabaseHelper(appContext).getWritableDatabase();
+        long[] simpleEntityIds = new long[]{
+                SqliteInsertHelper.insertSimpleEntity(database)
+        };
+        long[] customerIds = new long[]{
+                SqliteInsertHelper.insertCustomer(database, "Leia"),
+                SqliteInsertHelper.insertCustomer(database, "Luke")
+        };
+        long[] orderIds = new long[]{
+                SqliteInsertHelper.insertOrder(database, "Lightsaber", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Droid", customerIds[0]),
+                SqliteInsertHelper.insertOrder(database, "Speeder", customerIds[1]),
+        };
+
+        BoxStore.deleteAllFiles(appContext, null);
+        BoxStore boxStore = MyObjectBox.builder().androidContext(appContext).build();
+
+        // manual mapping
+        SqlMigration migration = new SqlMigration(database, boxStore);
+        migration.mapTableToEntity(DatabaseContract.SimpleEntity.TABLE_NAME, SimpleEntity.class)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity._ID, SimpleEntity_.id)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN, SimpleEntity_.simpleBoolean)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BOOLEAN_NULL, SimpleEntity_.nullableBoolean)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER, SimpleEntity_.simpleInteger)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_INTEGER_NULL, SimpleEntity_.nullableInteger)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT, SimpleEntity_.simpleShort)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_SHORT_NULL, SimpleEntity_.nullableShort)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG, SimpleEntity_.simpleLong)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_LONG_NULL, SimpleEntity_.nullableLong)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT, SimpleEntity_.simpleFloat)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_FLOAT_NULL, SimpleEntity_.nullableFloat)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE, SimpleEntity_.simpleDouble)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_DOUBLE_NULL, SimpleEntity_.nullableDouble)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE, SimpleEntity_.simpleByte)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_NULL, SimpleEntity_.nullableByte)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_ARRAY, SimpleEntity_.byteArray)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_STRING, SimpleEntity_.text)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_DATE, SimpleEntity_.date)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_MODE, SimpleEntity_.mode)
+                .build();
+        migration.mapTableToEntity(DatabaseContract.Customer.TABLE_NAME, Customer.class)
+                .mapColumnToProperty(DatabaseContract.Customer._ID, Customer_.id)
+                .mapColumnToProperty(DatabaseContract.Customer.COLUMN_NAME_NAME, Customer_.name)
+                .build();
+        migration.mapTableToEntity(DatabaseContract.Order.TABLE_NAME, Order.class)
+                .mapColumnToProperty(DatabaseContract.Order._ID, Order_.id)
+                .mapColumnToProperty(DatabaseContract.Order.COLUMN_NAME_TEXT, Order_.text)
+                .mapForeignKeyColumnToToOne(DatabaseContract.Order.COLUMN_NAME_CUSTOMER, "customer")
+                .build();
 
         Map<String, TableMapping> map = migration.getTableMap();
         assertEquals(3, map.size());
@@ -166,8 +242,8 @@ public class MigrationTest {
         assertEquals(3, box.count());
 
         assertOrder(box, orderIds[0], "Lightsaber", customerIds[0]);
-        assertOrder(box,orderIds[1], "Droid", customerIds[0]);
-        assertOrder(box, orderIds[2],"Speeder", customerIds[1]);
+        assertOrder(box, orderIds[1], "Droid", customerIds[0]);
+        assertOrder(box, orderIds[2], "Speeder", customerIds[1]);
     }
 
     private void assertOrder(Box<Order> box, long orderId, String text, long customerId) {

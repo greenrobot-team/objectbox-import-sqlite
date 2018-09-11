@@ -55,6 +55,22 @@ public class SqlMigration {
         this.boxStoreHelper = new BoxStoreHelper(boxStore);
     }
 
+    /**
+     * Maps a table to an entity. Use the returned builder to map columns of the table to properties
+     * of the entity:
+     *
+     * <pre>migration.mapTableToEntity("customers", Customer.class)
+     * .mapColumnToProperty("_id", Customer_.id)
+     * .mapColumnToProperty("customer_name", Customer_.name)
+     * .build();
+     * </pre>
+     *
+     * @see #autoDetect(boolean, boolean)
+     */
+    public TableMapping.Builder mapTableToEntity(String tableName, Class entityClass) {
+        return new TableMapping.Builder(database, boxStore, tableMap, tableName, entityClass);
+    }
+
     @VisibleForTesting
     public Map<String, TableMapping> getTableMap() {
         return tableMap;
@@ -83,7 +99,7 @@ public class SqlMigration {
      * <p/>
      * A foreign key column is mapped to a ToOne, if one exists with the same name as the column.
      * <p/>
-     * Use {@link #setTableMap(HashMap)} instead to define a custom mapping.
+     * Use {@link #mapTableToEntity(String, Class)} instead to add custom mappings.
      *
      * @param throwIfEntityUnmapped   Throws if an entity could not be
      *                                automatically mapped to a table. Set to false if you have
@@ -98,10 +114,10 @@ public class SqlMigration {
         Map<Property, String> unmappedProperties = new HashMap<>();
         for (Class entityClass : entityClasses) {
             String tableName = entityClass.getSimpleName();
-            if (tableExistsWithName(tableName)) {
+            if (tableExistsWithName(database, tableName)) {
                 TableMapping tableMapping = new TableMapping(tableName, entityClass);
 
-                Set<ForeignKey> foreignKeysOfTable = getForeignKeysOf(tableName);
+                Set<ForeignKey> foreignKeysOfTable = getForeignKeysOf(database, tableName);
 
                 // add mapping for each property that a column can be found for
                 EntityInfo entityInfo = boxStoreHelper.getEntityInfo(entityClass);
@@ -109,20 +125,20 @@ public class SqlMigration {
                 for (Property property : properties) {
                     // look for direct mapping of property name -> column name
                     String columnName = property.name;
-                    int indexOfColumn = indexOfColumnIn(columnName, tableName);
+                    int indexOfColumn = indexOfColumnIn(database, columnName, tableName);
                     // fall back if no match found
                     if (indexOfColumn == -1) {
                         if (property.isId) {
                             // for @Id property try again with '_id'
                             columnName = "_id";
-                            indexOfColumn = indexOfColumnIn(columnName, tableName);
+                            indexOfColumn = indexOfColumnIn(database, columnName, tableName);
                         } else if (property.name.endsWith("Id")) {
                             // for potential to-one target ID property, try again without 'Id' suffix
                             String columnFrom = property.name.substring(0, property.name.length() - 2);
                             // ensure that column stores a foreign key
                             if (isForeignKeyColumn(foreignKeysOfTable, columnFrom)) {
                                 columnName = columnFrom;
-                                indexOfColumn = indexOfColumnIn(columnName, tableName);
+                                indexOfColumn = indexOfColumnIn(database, columnName, tableName);
                                 // check if there actually is a ToOne
                                 try {
                                     Field field = entityClass.getDeclaredField(columnFrom);
@@ -183,7 +199,7 @@ public class SqlMigration {
         }
     }
 
-    private boolean isForeignKeyColumn(Set<ForeignKey> foreignKeysOfTable, String columnFrom) {
+    static boolean isForeignKeyColumn(Set<ForeignKey> foreignKeysOfTable, String columnFrom) {
         for (ForeignKey foreignKey : foreignKeysOfTable) {
             if (foreignKey.columnFrom.equals(columnFrom)) {
                 return true;
@@ -192,7 +208,7 @@ public class SqlMigration {
         return false;
     }
 
-    private boolean tableExistsWithName(String tableName) {
+    static boolean tableExistsWithName(SQLiteDatabase database, String tableName) {
         Cursor cursor = database.query("sqlite_master", new String[]{"name"},
                 "type='table' AND name=?", new String[]{tableName},
                 null, null, null, "1");
@@ -207,7 +223,7 @@ public class SqlMigration {
     /**
      * Returns -1 if the column does not exist.
      */
-    private int indexOfColumnIn(String columnName, String tableName) {
+    static int indexOfColumnIn(SQLiteDatabase database, String columnName, String tableName) {
         Cursor cursor = database.query("\"" + tableName + "\"", null, null, null,
                 null, null, null, "1");
         if (cursor == null) {
@@ -218,7 +234,7 @@ public class SqlMigration {
         return columnIndex;
     }
 
-    private Set<ForeignKey> getForeignKeysOf(String tableName) {
+    static Set<ForeignKey> getForeignKeysOf(SQLiteDatabase database, String tableName) {
         Set<ForeignKey> foreignKeys = new HashSet<>();
 
         Cursor cursor = database.rawQuery("PRAGMA foreign_key_list(\"" + tableName + "\")", null);
