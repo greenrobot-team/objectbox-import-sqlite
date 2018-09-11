@@ -1,6 +1,6 @@
 # Importing a SQLite database into ObjectBox
 
-This library can help importing data from a SQLite into an ObjectBox database.
+This Android library can help importing data from a SQLite into an ObjectBox database.
 
 To migrate your data you need to define a mapping of your SQLite database schema to ObjectBox entity 
 classes.
