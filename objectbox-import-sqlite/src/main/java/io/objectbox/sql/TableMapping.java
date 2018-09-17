@@ -89,12 +89,12 @@ public class TableMapping {
         return tableName;
     }
 
-    @VisibleForTesting
+    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     public Class getEntityClass() {
         return entityClass;
     }
 
-    @VisibleForTesting
+    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     public Map<String, ColumnMapping> getColumnMap() {
         return columnMap;
     }
@@ -109,10 +109,16 @@ public class TableMapping {
         private final Class entityClass;
         private final EntityInfo entityInfo;
 
-        private Map<String, ColumnMapping> columnMap = new HashMap<>();
+        private final Map<String, ColumnMapping> columnMap = new HashMap<>();
 
         public Builder(SQLiteDatabase database, BoxStore boxStore, Map<String,
                 TableMapping> tableMap, String tableName, Class entityClass) {
+            this(database, boxStore, tableMap, tableName, entityClass, null);
+        }
+
+        public Builder(SQLiteDatabase database, BoxStore boxStore, Map<String,
+                TableMapping> tableMap, String tableName, Class entityClass,
+                       @Nullable Map<String, ColumnMapping> columnMap) {
             if (!SqlMigration.tableExistsWithName(database, tableName)) {
                 throw new IllegalArgumentException("There is no table called '" + tableName + "'");
             }
@@ -123,6 +129,9 @@ public class TableMapping {
             this.tableMap = tableMap;
             this.tableName = tableName;
             this.entityClass = entityClass;
+            if (columnMap != null) {
+                this.columnMap.putAll(columnMap);
+            }
 
             foreignKeys = SqlMigration.getForeignKeysOf(database, tableName);
             entityInfo = new BoxStoreHelper(boxStore).getEntityInfo(entityClass);
@@ -225,6 +234,16 @@ public class TableMapping {
             ColumnMapping foreignKeyMapping = new ColumnMapping(columnName, indexOfColumn,
                     null, field, ColumnMapping.FOREIGN_KEY_MAPPER);
             columnMap.put(foreignKeyMapping.getColumnName(), foreignKeyMapping);
+            return this;
+        }
+
+        /**
+         * Removes the column mapping. Throws if there is no mapping for that column.
+         */
+        public Builder removeColumnMapping(String columnName) {
+            if (columnMap.remove(columnName) == null) {
+                throw new IllegalArgumentException("No mapping for column " + columnName);
+            }
             return this;
         }
 
