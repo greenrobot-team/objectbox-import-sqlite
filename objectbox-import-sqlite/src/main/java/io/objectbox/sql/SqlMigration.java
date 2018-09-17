@@ -71,6 +71,28 @@ public class SqlMigration {
         return new TableMapping.Builder(database, boxStore, tableMap, tableName, entityClass);
     }
 
+    /**
+     * Gets a builder initialized with an existing table to entity mapping. The existing mapping
+     * will be replaced when {@link TableMapping.Builder#build()} is called.
+     */
+    public TableMapping.Builder modifyTableMapping(String tableName) {
+        TableMapping tableMapping = tableMap.get(tableName);
+        if (tableMapping == null) {
+            throw new IllegalStateException("No mapping for " + tableName);
+        }
+        return new TableMapping.Builder(database, boxStore, tableMap, tableName,
+                tableMapping.getEntityClass(), tableMapping.getColumnMap());
+    }
+
+    /**
+     * Removes a table to entity mapping.
+     *
+     * @return {@code null} if there was no mapping for this table, otherwise the removed mapping.
+     */
+    public TableMapping removeTableMapping(String tableName) {
+        return tableMap.remove(tableName);
+    }
+
     @VisibleForTesting
     public Map<String, TableMapping> getTableMap() {
         return tableMap;
@@ -144,8 +166,9 @@ public class SqlMigration {
                                     Field field = entityClass.getDeclaredField(columnFrom);
                                     if (ToOne.class.isAssignableFrom(field.getType())) {
                                         field.setAccessible(true);
-                                        tableMapping.putColumnMapping(new ForeignKeyMapping(
-                                                columnName, indexOfColumn, field));
+                                        tableMapping.putColumnMapping(new ColumnMapping(
+                                                columnName, indexOfColumn, null, field,
+                                                ColumnMapping.FOREIGN_KEY_MAPPER));
                                         continue;
                                     }
                                 } catch (NoSuchFieldException ignored) {
@@ -162,8 +185,8 @@ public class SqlMigration {
                                     + property.name + "' of entity '" + tableName + "'.");
                         }
                         field.setAccessible(true); // to set private fields
-                        tableMapping.putColumnMapping(
-                                new ColumnMapping(columnName, indexOfColumn, property, field));
+                        tableMapping.putColumnMapping(new ColumnMapping(columnName, indexOfColumn,
+                                property, field, ColumnMapping.DEFAULT_MAPPER));
                     } else {
                         unmappedProperties.put(property, tableName);
                     }

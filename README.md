@@ -1,16 +1,16 @@
 # Importing a SQLite database into ObjectBox
 
-This Android library can help importing data from a SQLite into an ObjectBox database.
+This Android library helps with importing data from a SQLite database into ObjectBox.
 
 To migrate your data you need to define a mapping of your SQLite database schema to ObjectBox entity 
 classes.
 
 ## Automatic mapping detection
 This works if
-- table names match with entity class names 
-  `CREATE TABLE "Customer" -> '@Entity Customer'`
-- and column names match entity property names
-  `name TEXT -> String name`
+- entity class names match with table names 
+  `'@Entity Customer' -> CREATE TABLE "Customer"`
+- and entity property names match with column names
+  `String name -> name TEXT`
 
 For example if your schema is:
 ```
@@ -43,9 +43,38 @@ migration.migrate();
 The `_id INTEGER` column is automatically mapped to the `@Id long id` property, and the `FOREIGN KEY` 
 column `customer INTEGER` is mapped to the `ToOne<Customer> customer` property.
 
+By default `autoDetect()` will throw if it could not find a table for an entity, or a column for a
+property. You can turn this off using `autoDetect(false /* ignore missing tables */, false /* ignore missing columns */)`.
+
+## Customization
+You can remove or modify mappings:
+```java
+// remove mapping for "Order" table
+migration.removeTableMapping("Order");
+
+// remove mapping of "text" column
+migration.modifyTableMapping("Order")
+        .removeColumnMapping("text")
+        .build();
+```
+
+You can provide a custom mapper to read and set values:
+```java
+migration.modifyTableMapping("Order")
+        .mapColumnToProperty("text", Order_.text,
+                new ColumnMapping.Mapper() {
+                    @Override
+                    public void mapValue(ColumnMapping mapping, Cursor row, Object entity) {
+                        // prefix "text" column values
+                        String text = row.getString(mapping.getColumnIndex());
+                        mapping.setValue(entity, "ARCHIVED - " + text);
+                    }
+                })
+        .build();
+```
+
 ## Manual mapping
-If table and column names do or can not match entity and property names, or you do not want to
-migrate all tables and/or columns, specify a manual mapping.
+You can also build a mapping completely by yourself.
 
 For example, if the table schema is:
 ```
@@ -68,12 +97,20 @@ class Order {
 }
 ```
 
-Then your mapping code should be:
+Then your mapping code could be:
 ```java
 SqlMigration migration = new SqlMigration(database, boxStore);
 migration.mapTableToEntity("orders", Order.class)
     .mapColumnToProperty("_id", Order_.id)
-    .mapColumnToProperty("order_text", Order_.text)
+    .mapColumnToProperty("order_text", Order_.text,
+            new ColumnMapping.Mapper() {
+                @Override
+                public void mapValue(ColumnMapping mapping, Cursor row, Object entity) {
+                    // prefix "text" column values
+                    String text = row.getString(mapping.getColumnIndex());
+                    mapping.setValue(entity, "ARCHIVED - " + text);
+                }
+            })
     .mapForeignKeyColumnToToOne("order_customer", "customer")
     .build();
 migration.migrate();
@@ -101,8 +138,6 @@ migration.migrate(new SqlMigration.PostMigrationStep() {
 });
 ```
 
-## Customization
-If the default implementation does not do what you need it to, `SqlMigration`, `TableMapping` and 
-`ColumnMapping` can be subclassed.
-
-We also welcome change suggestions that might benefit others, feel free to create an issue!
+## Something else
+If you are missing something, we welcome change suggestions that might benefit others, feel free to 
+create an issue!
