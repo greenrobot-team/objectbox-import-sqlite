@@ -85,6 +85,8 @@ public class MigrationTest {
         assertSimpleEntityBox(boxStore, simpleEntityIds);
         assertCustomerBox(boxStore, customerIds);
         assertOrderBox(boxStore, orderIds, customerIds);
+
+        boxStore.close();
     }
 
     @Test
@@ -159,6 +161,8 @@ public class MigrationTest {
         assertSimpleEntityBox(boxStore, simpleEntityIds);
         assertCustomerBox(boxStore, customerIds);
         assertOrderBox(boxStore, orderIds, customerIds);
+
+        boxStore.close();
     }
 
     private void assertSimpleEntityMapping(Map<String, TableMapping> map) {
