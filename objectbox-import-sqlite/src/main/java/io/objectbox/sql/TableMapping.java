@@ -76,7 +76,7 @@ public class TableMapping {
      * Maps a row based on the current column map to an entity and then puts it into the box.
      * You might want to override this method to add custom behavior for mapping a row to an entity.
      */
-    public void mapRow(Cursor row, Object entity, Box box) throws IllegalAccessException {
+    public void mapRow(Cursor row, Object entity, Box box) {
         for (ColumnMapping columnMapping : columnMap.values()) {
             columnMapping.mapValue(row, entity);
         }
@@ -141,6 +141,25 @@ public class TableMapping {
          * @see #mapForeignKeyColumnToToOne(String, String)
          */
         public Builder mapColumnToProperty(String columnName, Property property) {
+            return mapColumnToProperty(columnName, property, ColumnMapping.DEFAULT_MAPPER);
+        }
+
+        /**
+         * Maps a column to a property. This works for supported and custom property types. Pass
+         * a mapper to customize how a row value is mapped to a property value.
+         * <p/>
+         * A simple example that maps the '_id' column to the 'id' property:
+         * <pre>
+         * migration.mapTableToEntity("customers", Customer.class)
+         *     .mapColumnToProperty("_id", Customer_.id)
+         *     .build();
+         * </pre>
+         *
+         * @see #mapColumnToProperty(String, Property)
+         * @see #mapForeignKeyColumnToToOne(String, String)
+         */
+        public Builder mapColumnToProperty(String columnName, Property property,
+                                           @Nullable ColumnMapping.Mapper mapper) {
             int indexOfColumn = SqlMigration.indexOfColumnIn(database, columnName, tableName);
             if (indexOfColumn == -1) {
                 throw new IllegalArgumentException("There is no column '" + columnName
@@ -167,7 +186,7 @@ public class TableMapping {
             field.setAccessible(true); // to set private fields
 
             ColumnMapping columnMapping = new ColumnMapping(columnName, indexOfColumn, property,
-                    field);
+                    field, mapper);
             columnMap.put(columnMapping.getColumnName(), columnMapping);
             return this;
         }
@@ -203,8 +222,8 @@ public class TableMapping {
             }
             field.setAccessible(true); // to set private fields
 
-            ForeignKeyMapping foreignKeyMapping =
-                    new ForeignKeyMapping(columnName, indexOfColumn, field);
+            ColumnMapping foreignKeyMapping = new ColumnMapping(columnName, indexOfColumn,
+                    null, field, ColumnMapping.FOREIGN_KEY_MAPPER);
             columnMap.put(foreignKeyMapping.getColumnName(), foreignKeyMapping);
             return this;
         }

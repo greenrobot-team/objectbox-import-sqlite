@@ -144,8 +144,9 @@ public class SqlMigration {
                                     Field field = entityClass.getDeclaredField(columnFrom);
                                     if (ToOne.class.isAssignableFrom(field.getType())) {
                                         field.setAccessible(true);
-                                        tableMapping.putColumnMapping(new ForeignKeyMapping(
-                                                columnName, indexOfColumn, field));
+                                        tableMapping.putColumnMapping(new ColumnMapping(
+                                                columnName, indexOfColumn, null, field,
+                                                ColumnMapping.FOREIGN_KEY_MAPPER));
                                         continue;
                                     }
                                 } catch (NoSuchFieldException ignored) {
@@ -162,8 +163,8 @@ public class SqlMigration {
                                     + property.name + "' of entity '" + tableName + "'.");
                         }
                         field.setAccessible(true); // to set private fields
-                        tableMapping.putColumnMapping(
-                                new ColumnMapping(columnName, indexOfColumn, property, field));
+                        tableMapping.putColumnMapping(new ColumnMapping(columnName, indexOfColumn,
+                                property, field, ColumnMapping.DEFAULT_MAPPER));
                     } else {
                         unmappedProperties.put(property, tableName);
                     }

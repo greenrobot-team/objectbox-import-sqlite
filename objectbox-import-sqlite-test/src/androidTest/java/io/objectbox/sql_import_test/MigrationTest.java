@@ -1,6 +1,7 @@
 package io.objectbox.sql_import_test;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -82,7 +83,7 @@ public class MigrationTest {
         // migrate
         migration.migrate(null);
 
-        assertSimpleEntityBox(boxStore, simpleEntityIds);
+        assertSimpleEntityBox(boxStore, simpleEntityIds, Mode.NULL);
         assertCustomerBox(boxStore, customerIds);
         assertOrderBox(boxStore, orderIds, customerIds);
 
@@ -136,7 +137,19 @@ public class MigrationTest {
                 .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_BYTE_ARRAY, SimpleEntity_.byteArray)
                 .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_STRING, SimpleEntity_.text)
                 .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_DATE, SimpleEntity_.date)
-                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_MODE, SimpleEntity_.mode)
+                .mapColumnToProperty(DatabaseContract.SimpleEntity.COLUMN_NAME_MODE,
+                        SimpleEntity_.mode, new ColumnMapping.Mapper() {
+                            @Override
+                            public void mapValue(ColumnMapping mapping, Cursor row, Object entity) {
+                                int mode;
+                                if (row.isNull(mapping.getColumnIndex())) {
+                                    mode = Mode.DEFAULT.toId();
+                                } else {
+                                    mode = row.getInt(mapping.getColumnIndex());
+                                }
+                                mapping.setValue(entity, mode);
+                            }
+                        })
                 .build();
         migration.mapTableToEntity(DatabaseContract.Customer.TABLE_NAME, Customer.class)
                 .mapColumnToProperty(DatabaseContract.Customer._ID, Customer_.id)
@@ -158,7 +171,7 @@ public class MigrationTest {
         // migrate
         migration.migrate(null);
 
-        assertSimpleEntityBox(boxStore, simpleEntityIds);
+        assertSimpleEntityBox(boxStore, simpleEntityIds, Mode.DEFAULT);
         assertCustomerBox(boxStore, customerIds);
         assertOrderBox(boxStore, orderIds, customerIds);
 
@@ -192,12 +205,12 @@ public class MigrationTest {
         assertEquals(3, columnMap.size());
     }
 
-    private void assertSimpleEntityBox(BoxStore boxStore, long[] simpleEntityIds) {
+    private void assertSimpleEntityBox(BoxStore boxStore, long[] simpleEntityIds, Mode modeIfNull) {
         Box<SimpleEntity> box = boxStore.boxFor(SimpleEntity.class);
         assertEquals(2, box.count());
 
         assertSimpleEntity(box, simpleEntityIds[0]);
-        assertSimpleEntityNullOrDefault(box, simpleEntityIds[1]);
+        assertSimpleEntityNullOrDefault(box, simpleEntityIds[1], modeIfNull);
     }
 
     private void assertSimpleEntity(Box<SimpleEntity> box, long simpleEntityId) {
@@ -234,7 +247,8 @@ public class MigrationTest {
         assertEquals(Mode.EXTRA, notNullEntity.mode);
     }
 
-    private void assertSimpleEntityNullOrDefault(Box<SimpleEntity> box, long simpleEntityId) {
+    private void assertSimpleEntityNullOrDefault(Box<SimpleEntity> box, long simpleEntityId,
+                                                 Mode modeIfNull) {
         SimpleEntity nullEntity = box.get(simpleEntityId);
         assertEquals(simpleEntityId, nullEntity.getId());
 
@@ -262,7 +276,7 @@ public class MigrationTest {
 
         assertNull(nullEntity.getDate());
 
-        assertEquals(Mode.NULL, nullEntity.mode);
+        assertEquals(modeIfNull, nullEntity.mode);
     }
 
     private void assertCustomerBox(BoxStore boxStore, long[] customerIds) {
