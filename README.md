@@ -141,3 +141,6 @@ migration.migrate(new SqlMigration.PostMigrationStep() {
 ## Something else
 If you are missing something, we welcome change suggestions that might benefit others, feel free to 
 create an issue!
+
+# License
+This work by ObjectBox is licensed under the [Apache License 2.0](LICENSE.txt).
